@@ -120,3 +120,50 @@ git add .
 git commit -m "..."
 git push origin <branch>
 ```
+
+## 9. 배포용 빌드(APK / AAB)
+
+### 9.1 서명 전 릴리스 아티팩트 생성
+
+프로젝트 루트에서:
+
+```bash
+cd android
+.\gradlew clean
+.\gradlew assembleRelease
+.\gradlew bundleRelease
+```
+
+결과물 경로:
+- APK: `android/app/build/outputs/apk/release/app-release.apk`
+- AAB: `android/app/build/outputs/bundle/release/app-release.aab`
+
+### 9.2 서명 키 생성(최초 1회)
+
+```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore upload-key.keystore -alias upload -keyalg RSA -keysize 2048 -validity 10000
+```
+
+생성된 키 파일을 `android/app/upload-key.keystore`에 둡니다.
+
+### 9.3 서명 설정
+
+`android/gradle.properties`에 아래 값을 추가합니다(실제 값으로 변경):
+
+```properties
+MYAPP_UPLOAD_STORE_FILE=upload-key.keystore
+MYAPP_UPLOAD_KEY_ALIAS=upload
+MYAPP_UPLOAD_STORE_PASSWORD=your_store_password
+MYAPP_UPLOAD_KEY_PASSWORD=your_key_password
+```
+
+`android/app/build.gradle`의 `signingConfigs`/`buildTypes.release`에 릴리스 서명 설정을 연결합니다.
+
+### 9.4 Play Console 업로드용 AAB 빌드
+
+```bash
+cd android
+.\gradlew bundleRelease
+```
+
+생성된 `app-release.aab`를 Google Play Console에 업로드하면 됩니다.
